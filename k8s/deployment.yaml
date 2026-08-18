@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: novapay-api
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: novapay-api
+
+  template:
+    metadata:
+      labels:
+        app: novapay-api
+
+    spec:
+      containers:
+        - name: novapay-api
+
+          image: IMAGE_NOVAPAY
+
+          ports:
+            - containerPort: 3000
+
+          readinessProbe:
+            httpGet:
+              path: /test
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /test
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
