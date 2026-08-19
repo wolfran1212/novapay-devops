@@ -4,8 +4,21 @@ kind: Deployment
 metadata:
   name: novapay-api
 
+  labels:
+    app: novapay-api
+    app.kubernetes.io/name: novapay-api
+    app.kubernetes.io/part-of: novapay
+
 spec:
   replicas: 2
+
+  # maxUnavailable en 0 obliga a levantar el pod nuevo antes de retirar el
+  # viejo, de modo que el despliegue no deje la API sin capacidad.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
 
   selector:
     matchLabels:
@@ -15,15 +28,33 @@ spec:
     metadata:
       labels:
         app: novapay-api
+        app.kubernetes.io/name: novapay-api
+        app.kubernetes.io/part-of: novapay
 
     spec:
       containers:
         - name: novapay-api
 
+          # El Jenkinsfile sustituye este placeholder por sed durante el
+          # stage de despliegue. No cambiar el nombre.
           image: IMAGE_NOVAPAY
 
           ports:
             - containerPort: 3000
+
+          env:
+            - name: PORT
+              value: "3000"
+
+          # Valores conservadores para una API Node pequena: el request
+          # asegura la reserva minima y el limit acota el consumo.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
 
           readinessProbe:
             httpGet:
